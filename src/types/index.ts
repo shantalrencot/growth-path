@@ -51,6 +51,28 @@ export interface Module {
   updated_at:  string
 }
 
+// Minimal shapes returned by Supabase FK/join selects
+export interface MemberSummary {
+  id:     string
+  name:   string
+  email:  string
+  phone?: string | null
+  status?: MemberStatus
+  gender?: Gender | null
+}
+
+export interface TrackSummary {
+  id:          string
+  title:       string
+  order_index: number
+  modules?:    Module[]
+}
+
+// group_members join returns { member: MemberSummary }[]
+export interface GroupMemberEntry {
+  member: MemberSummary
+}
+
 export interface DiscipleshipGroup {
   id:           string
   name:         string
@@ -60,9 +82,9 @@ export interface DiscipleshipGroup {
   is_active:    boolean
   created_at:   string
   updated_at:   string
-  discipler?:   Member
-  track?:       Track
-  members?:     Member[]
+  discipler?:   MemberSummary
+  track?:       TrackSummary
+  members?:     GroupMemberEntry[]
 }
 
 export interface GroupMember {

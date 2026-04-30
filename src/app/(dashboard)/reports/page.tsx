@@ -1,5 +1,4 @@
 import { BarChart2 } from 'lucide-react'
-import { createClient } from '@/utils/supabase/server'
 import { getGroups } from '@/services/groups'
 import { getGroupProgressSummary } from '@/services/progress'
 import { Card, CardTitle } from '@/components/ui/Card'

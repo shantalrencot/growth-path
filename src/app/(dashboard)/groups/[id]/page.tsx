@@ -17,7 +17,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
     getMeetingsByGroup(params.id),
   ])
 
-  const groupMembers = (group.members as unknown as { member: { id: string; name: string; email: string } }[]) ?? []
+  const groupMembers = group.members ?? []
   const recentMeetings = meetings.slice(0, 3)
 
   return (
@@ -25,8 +25,7 @@ export default async function GroupDetailPage({ params }: { params: { id: string
       <div>
         <h1 className="text-xl font-bold text-gray-900">{group.name}</h1>
         <p className="text-sm text-gray-500">
-          Led by {(group.discipler as unknown as { name: string } | undefined)?.name} ·{' '}
-          {(group.track as unknown as { title: string } | undefined)?.title}
+          Led by {group.discipler?.name} · {group.track?.title}
         </p>
       </div>
 
