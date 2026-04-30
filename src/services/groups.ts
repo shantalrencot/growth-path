@@ -80,6 +80,16 @@ export async function removeMemberFromGroup(groupId: string, memberId: string): 
 
 export async function getGroupsByMembership(memberId: string): Promise<DiscipleshipGroup[]> {
   const supabase = await createClient()
+
+  const { data: memberships, error: mErr } = await supabase
+    .from('group_members')
+    .select('group_id')
+    .eq('member_id', memberId)
+  if (mErr) throw new Error(mErr.message)
+
+  const groupIds = (memberships ?? []).map((r) => r.group_id)
+  if (groupIds.length === 0) return []
+
   const { data, error } = await supabase
     .from('discipleship_groups')
     .select(`
@@ -87,14 +97,8 @@ export async function getGroupsByMembership(memberId: string): Promise<Disciples
       track:tracks(id, title, order_index),
       members:group_members(member:members(id, name, email, status))
     `)
+    .in('id', groupIds)
     .eq('is_active', true)
-    .in('id', (
-      await supabase
-        .from('group_members')
-        .select('group_id')
-        .eq('member_id', memberId)
-        .then(({ data }) => (data ?? []).map((r) => r.group_id))
-    ))
     .order('name')
   if (error) throw new Error(error.message)
   return data
