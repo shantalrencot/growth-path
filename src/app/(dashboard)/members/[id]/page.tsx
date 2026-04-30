@@ -12,8 +12,8 @@ import { ROLE_LABELS, GENDER_LABELS, PROGRESS_LABELS, PROGRESS_COLORS } from '@/
 export default async function MemberDetailPage({ params }: { params: { id: string } }) {
   const [member, progress, tracks] = await Promise.all([
     getMemberById(params.id).catch(() => null),
-    getMemberProgress(params.id),
-    getTracks(),
+    getMemberProgress(params.id).catch(() => []),
+    getTracks().catch(() => []),
   ])
 
   if (!member) notFound()

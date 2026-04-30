@@ -1,8 +1,9 @@
+import { redirect } from 'next/navigation'
 import { Calendar } from 'lucide-react'
 import { createClient } from '@/utils/supabase/server'
 import { getMemberByAuthId } from '@/services/members'
 import { getMeetingsByGroup } from '@/services/meetings'
-import { getGroupsByDiscipler } from '@/services/groups'
+import { getGroupsByDiscipler, getGroupsByMembership } from '@/services/groups'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -11,12 +12,17 @@ import { formatDateTime } from '@/utils/helpers'
 export default async function MeetingsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  if (!user) redirect('/login')
 
   const member = await getMemberByAuthId(user.id)
-  if (!member) return null
+  if (!member) redirect('/login')
 
-  const groups   = await getGroupsByDiscipler(member.id)
+  const role = member.roles?.name
+
+  const groups = role === 'disciple'
+    ? await getGroupsByMembership(member.id)
+    : await getGroupsByDiscipler(member.id)
+
   const allMeetings = (
     await Promise.all(groups.map((g) => getMeetingsByGroup(g.id)))
   ).flat().sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime())
@@ -26,7 +32,11 @@ export default async function MeetingsPage() {
       <h1 className="text-xl font-bold text-gray-900">Meetings</h1>
 
       {allMeetings.length === 0 ? (
-        <EmptyState icon={Calendar} title="No meetings yet" description="Schedule a meeting for one of your groups." />
+        <EmptyState
+          icon={Calendar}
+          title="No meetings yet"
+          description={role === 'disciple' ? 'Your group meetings will appear here.' : 'Schedule a meeting for one of your groups.'}
+        />
       ) : (
         <div className="space-y-2">
           {allMeetings.map((m) => {

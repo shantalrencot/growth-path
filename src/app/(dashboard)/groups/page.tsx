@@ -4,7 +4,6 @@ import { getGroups } from '@/services/groups'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { Avatar } from '@/components/ui/Avatar'
 
 export default async function GroupsPage() {
   const groups = await getGroups()
@@ -18,7 +17,7 @@ export default async function GroupsPage() {
       ) : (
         <div className="space-y-3">
           {groups.map((group) => {
-            const memberCount = (group.members as unknown as { member: unknown }[] | undefined)?.length ?? 0
+            const memberCount = group.members?.length ?? 0
             return (
               <Link key={group.id} href={`/groups/${group.id}`}>
                 <Card className="hover:border-brand-primary/30 transition-colors">
@@ -29,7 +28,7 @@ export default async function GroupsPage() {
                     <div className="flex-1 min-w-0">
                       <h2 className="font-semibold text-gray-900 truncate">{group.name}</h2>
                       <p className="text-xs text-gray-500 truncate">
-                        Led by {(group.discipler as unknown as { name: string } | undefined)?.name ?? '—'}
+                        Led by {group.discipler?.name ?? '—'}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -37,9 +36,7 @@ export default async function GroupsPage() {
                         label={`${memberCount}/${group.max_size} members`}
                         className={memberCount >= group.max_size ? 'bg-red-50 text-brand-danger' : 'bg-indigo-50 text-brand-primary'}
                       />
-                      <span className="text-xs text-gray-400">
-                        {(group.track as unknown as { title: string } | undefined)?.title}
-                      </span>
+                      <span className="text-xs text-gray-400">{group.track?.title}</span>
                     </div>
                   </div>
                 </Card>

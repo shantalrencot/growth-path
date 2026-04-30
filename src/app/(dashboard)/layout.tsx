@@ -10,7 +10,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  const member = await getMemberByAuthId(user.id)
+  const member = await getMemberByAuthId(user.id).catch(() => null)
   if (!member) redirect('/login')
 
   const role = (member.roles?.name ?? 'disciple') as Role
