@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personality Assessment Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #3730a3;
+      color: white;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 1.3rem; font-weight: 700; }
+    header p  { font-size: 0.8rem; opacity: 0.8; margin-top: 2px; }
+
+    .refresh-btn {
+      background: #d97706;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .refresh-btn:hover { background: #b45309; }
+    .refresh-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .summary {
+      display: flex;
+      gap: 16px;
+      padding: 20px 24px 0;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      padding: 16px 24px;
+      min-width: 140px;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .stat-card .number { font-size: 2.2rem; font-weight: 800; color: #3730a3; }
+    .stat-card .label  { font-size: 0.78rem; color: #718096; margin-top: 2px; }
+
+    .companies { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+
+    .company-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .company-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+      gap: 12px;
+    }
+    .company-header:hover { background: #f7fafc; }
+
+    .company-name { font-weight: 700; font-size: 1rem; }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .pill-total  { background: #ebf4ff; color: #3730a3; }
+    .pill-done   { background: #d1fae5; color: #065f46; }
+    .pill-error  { background: #fee2e2; color: #991b1b; }
+
+    .company-pills { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+    .chevron { font-size: 0.85rem; color: #a0aec0; transition: transform 0.2s; }
+    .chevron.open { transform: rotate(180deg); }
+
+    .people-list {
+      display: none;
+      border-top: 1px solid #e2e8f0;
+    }
+    .people-list.open { display: block; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { background: #f7fafc; color: #718096; font-weight: 600;
+         text-align: left; padding: 8px 18px; }
+    td { padding: 9px 18px; border-top: 1px solid #f0f4f8; }
+    tr:hover td { background: #fafafa; }
+
+    .status-done  { color: #065f46; font-weight: 700; }
+    .status-error { color: #991b1b; font-weight: 700; }
+    .status-other { color: #718096; }
+
+    .loading, .error-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: #718096;
+      font-size: 1rem;
+    }
+    .error-msg { color: #c53030; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Personality Assessment Tracker</h1>
+    <p id="updated-at">Loading…</p>
+  </div>
+  <button class="refresh-btn" id="refresh-btn" onclick="load()">&#8635; Refresh</button>
+</header>
+
+<div class="summary" id="summary"></div>
+<div class="companies" id="companies"><p class="loading">Loading data…</p></div>
+
+<script>
+  function load() {
+    var btn = document.getElementById('refresh-btn');
+    btn.disabled = true;
+    btn.textContent = 'Loading…';
+    document.getElementById('companies').innerHTML = '<p class="loading">Loading data…</p>';
+    document.getElementById('summary').innerHTML = '';
+
+    google.script.run
+      .withSuccessHandler(render)
+      .withFailureHandler(function(err) {
+        document.getElementById('companies').innerHTML =
+          '<p class="error-msg">Error: ' + err.message + '</p>';
+        btn.disabled = false;
+        btn.textContent = '⟳ Refresh';
+      })
+      .getDashboardData();
+  }
+
+  function render(data) {
+    var btn = document.getElementById('refresh-btn');
+    btn.disabled = false;
+    btn.textContent = '⟳ Refresh';
+
+    if (data.error) {
+      document.getElementById('companies').innerHTML =
+        '<p class="error-msg">' + data.error + '</p>';
+      return;
+    }
+
+    document.getElementById('updated-at').textContent =
+      'Last updated: ' + data.updated;
+
+    // Summary cards
+    var totalDone  = data.companies.reduce(function(s, c) { return s + c.done; }, 0);
+    document.getElementById('summary').innerHTML =
+      '<div class="stat-card"><div class="number">' + data.total + '</div><div class="label">Total Submissions</div></div>' +
+      '<div class="stat-card"><div class="number">' + data.companies.length + '</div><div class="label">Companies</div></div>' +
+      '<div class="stat-card"><div class="number">' + totalDone + '</div><div class="label">Completed (DONE)</div></div>';
+
+    // Company cards
+    var html = '';
+    data.companies.forEach(function(co, i) {
+      var id = 'co-' + i;
+      html += '<div class="company-card">';
+      html += '<div class="company-header" onclick="toggle(\'' + id + '\')">';
+      html += '<span class="company-name">' + esc(co.name) + '</span>';
+      html += '<div style="display:flex;align-items:center;gap:10px">';
+      html += '<div class="company-pills">';
+      html += '<span class="pill pill-total">' + co.total + ' submitted</span>';
+      if (co.done)  html += '<span class="pill pill-done">'  + co.done  + ' done</span>';
+      if (co.error) html += '<span class="pill pill-error">' + co.error + ' error</span>';
+      html += '</div>';
+      html += '<span class="chevron" id="chev-' + id + '">▼</span>';
+      html += '</div></div>';
+
+      html += '<div class="people-list" id="' + id + '">';
+      html += '<table><thead><tr><th>Name</th><th>Email</th><th>Submitted</th><th>Status</th></tr></thead><tbody>';
+      co.people.forEach(function(p) {
+        var sc = p.status === 'DONE' ? 'status-done' : (p.status.indexOf('ERROR') !== -1 ? 'status-error' : 'status-other');
+        html += '<tr>';
+        html += '<td>' + esc(p.name) + '</td>';
+        html += '<td>' + esc(p.email) + '</td>';
+        html += '<td>' + esc(p.timestamp) + '</td>';
+        html += '<td class="' + sc + '">' + esc(p.status) + '</td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div></div>';
+    });
+
+    document.getElementById('companies').innerHTML = html || '<p class="loading">No data yet.</p>';
+  }
+
+  function toggle(id) {
+    var list = document.getElementById(id);
+    var chev = document.getElementById('chev-' + id);
+    list.classList.toggle('open');
+    chev.classList.toggle('open');
+  }
+
+  function esc(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  load();
+</script>
+</body>
+</html>
